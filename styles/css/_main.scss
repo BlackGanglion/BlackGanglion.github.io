@@ -43,7 +43,7 @@ body{
 
 $transitionTime: 0.2s;
 .purple-section{
-  //background-color: #5B95DE;
+  background-color: #5B95DE;
   color: #fff;
   padding: 4% 10%;
 }
@@ -120,13 +120,5 @@ li p{
 	}
 	.purple-section{
 	  background-color: #5B95DE;
-	}
-}
-
-@media (min-width: 768px) {
-	body{
-		background-image: url(../../assets/images/background.jpg);
-		background-repeat: no-repeat;
-		background-attachment: fixed;
 	}
 }
