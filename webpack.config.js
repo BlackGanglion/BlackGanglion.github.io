@@ -1,12 +1,14 @@
 var ExtractTextPlugin = require('extract-text-webpack-plugin');
+//var FixCSSPathPlugin = require('./FixCSSPathPlugin');
 
 module.exports = {
   entry: {
-    'bundle-js': './js/main.js',
-    'bundle-css': './css/index.scss'
+    'bundle-js': './assets/js/main.js',
+    'bundle-css': './assets/css/index.scss'
   },
 
   output: {
+    path: './dist',
     filename: '[name].js'
   },
 
@@ -28,6 +30,7 @@ module.exports = {
   plugins: [
     new ExtractTextPlugin('[name].css', {
       allChunks: true
-    })
+    }),
+    //new FixCSSPathPlugin()
   ]
 };

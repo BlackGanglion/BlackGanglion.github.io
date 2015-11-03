@@ -6905,4 +6905,6 @@ li p {
   .flipper {
     width: 40%; }
   .purple-section .heading-wrapper {
-    margin-top: 47%; } }
+    margin-top: 47%; }
+  .purple-section {
+    background-color: #5B95DE; } }
