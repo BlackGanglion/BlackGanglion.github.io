@@ -28,6 +28,8 @@ var checkPictureSuccess = function(){
 var getPictureAndWord = function(){
   var pictureX, pictureY;
 
+  $('#boxhint').text('验证图片生成中...');
+  
   //清除之前的点击事件
   $('#verify').unbind("click");
 
@@ -72,7 +74,7 @@ var getPictureAndWord = function(){
 //显示图片
 var showPicture = function(){
   $('#boxhint').css('margin-left', '3%')
-      .css('color', 'white').text('验证图片生成中...');
+      .css('color', 'white');
   $box.html('<img src="./dist/images/no.png" />');
   getPictureAndWord();
   $picture.show();
