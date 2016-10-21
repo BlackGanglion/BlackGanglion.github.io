@@ -808,6 +808,9 @@ function solve(svg, data) {
   var gc = inputGc ? inputGc : testGC;
   console.info('本次社团中心斥力系数为' + gc);
 
+  // 是否使用社团引力
+  var isUseClub = $('#isUseClub')[0].checked;
+
   var clubNodes = randomClubNodes(nodes, clubNumber);
 
   while (count--) {
@@ -819,8 +822,10 @@ function solve(svg, data) {
 
     // 社团引力
     // 更新社团中心
-    updateClubNodes(nodes, clubNodes, gc);
-    calculateClubAttraction(nodes, clubNodes, g);
+    if (isUseClub) {
+      updateClubNodes(nodes, clubNodes, gc);
+      calculateClubAttraction(nodes, clubNodes, g);
+    }
 
     // 计算位置
     calculatePos(nodes, temperature);
@@ -831,23 +836,26 @@ function solve(svg, data) {
 
   // 最终结果，渲染点和线
   console.info('节点最终状态:', nodes);
-  console.info('社团引力聚类结果:', clubNodes);
 
-  var res = checkClub(nodes, links);
+  if (isUseClub) {
+    console.info('社团引力聚类结果:', clubNodes);
+    var res = checkClub(nodes, links);
+    console.info('当前模块度:', res);
+    $('.modelValue').text(res);
 
-  console.info('当前模块度:', res);
-
-  $('.modelValue').text(res);
-
-  record.push({
-    testG: testG,
-    testGC: testGC,
-    res: res
-  });
+    record.push({
+      testG: testG,
+      testGC: testGC,
+      res: res
+    });
+  }
 
   renderLink(svg, nodes, links, lastTime);
   renderNodes(svg, nodes, lastTime);
-  renderClubNodes(svg, clubNodes, lastTime);
+
+  if (isUseClub) {
+    renderClubNodes(svg, clubNodes, lastTime);
+  }
 }
 
 $.getJSON('./data.json', function (data) {
