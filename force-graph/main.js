@@ -156,7 +156,7 @@ function createNode(parent, _ref, lastTime) {
 
   setAttr(cxAnimate, {
     attributeName: "cx",
-    begin: "DOMNodeInsertedIntoDocument",
+    begin: "render.DOMNodeInsertedIntoDocument",
     dur: lastTime + 's',
     values: cxValues,
     repeatCount: "1",
@@ -171,7 +171,7 @@ function createNode(parent, _ref, lastTime) {
 
   setAttr(cyAnimate, {
     attributeName: "cy",
-    begin: "DOMNodeInsertedIntoDocument",
+    begin: "render.DOMNodeInsertedIntoDocument",
     dur: lastTime + 's',
     values: cyValues,
     repeatCount: "1",
@@ -227,7 +227,7 @@ function createNode(parent, _ref, lastTime) {
 
   setAttr(xAnimate, {
     attributeName: "x",
-    begin: "DOMNodeInsertedIntoDocument",
+    begin: "render.DOMNodeInsertedIntoDocument",
     dur: lastTime + 's',
     values: xValues,
     repeatCount: "1",
@@ -242,7 +242,7 @@ function createNode(parent, _ref, lastTime) {
 
   setAttr(yAnimate, {
     attributeName: "y",
-    begin: "DOMNodeInsertedIntoDocument",
+    begin: "render.DOMNodeInsertedIntoDocument",
     dur: lastTime + 's',
     values: yValues,
     repeatCount: "1",
@@ -297,7 +297,7 @@ function createLink(parent, link, nodes, lastTime) {
   var x1Animate = create("animate");
   setAttr(x1Animate, {
     attributeName: "x1",
-    begin: "DOMNodeInsertedIntoDocument",
+    begin: "render.DOMNodeInsertedIntoDocument",
     dur: lastTime + 's',
     values: x1Values,
     repeatCount: "1",
@@ -307,7 +307,7 @@ function createLink(parent, link, nodes, lastTime) {
   var y1Animate = create("animate");
   setAttr(y1Animate, {
     attributeName: "y1",
-    begin: "DOMNodeInsertedIntoDocument",
+    begin: "render.DOMNodeInsertedIntoDocument",
     dur: lastTime + 's',
     values: y1Values,
     repeatCount: "1",
@@ -328,7 +328,7 @@ function createLink(parent, link, nodes, lastTime) {
   var x2Animate = create("animate");
   setAttr(x2Animate, {
     attributeName: "x2",
-    begin: "DOMNodeInsertedIntoDocument",
+    begin: "render.DOMNodeInsertedIntoDocument",
     dur: lastTime + 's',
     values: x2Values,
     repeatCount: "1",
@@ -338,7 +338,7 @@ function createLink(parent, link, nodes, lastTime) {
   var y2Animate = create("animate");
   setAttr(y2Animate, {
     attributeName: "y2",
-    begin: "DOMNodeInsertedIntoDocument",
+    begin: "render.DOMNodeInsertedIntoDocument",
     dur: lastTime + 's',
     values: y2Values,
     repeatCount: "1",
@@ -856,6 +856,14 @@ function solve(svg, data) {
   if (isUseClub) {
     renderClubNodes(svg, clubNodes, lastTime);
   }
+
+  setTimeout(function () {
+    var renderStartNode = create("text");
+    setAttr(renderStartNode, {
+      id: 'render'
+    });
+    svg.appendChild(renderStartNode);
+  }, 0);
 }
 
 $.getJSON('./data.json', function (data) {
