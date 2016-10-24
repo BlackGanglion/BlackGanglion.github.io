@@ -566,7 +566,12 @@ function updateClubNodes(nodes, clubNodes, gc) {
   });
 
   // 社团中心的斥力
+  const records = [];
   for(let i = 0; i < clubNodes.length; i++) {
+    records[i] = {
+      cx: 0,
+      cy: 0,
+    };
     for(let j = 0; j < clubNodes.length; j++) {
       if (i === j) continue;
       const x = clubNodes[i].cx - clubNodes[j].cx;
@@ -575,14 +580,14 @@ function updateClubNodes(nodes, clubNodes, gc) {
 
       const f = gc * clubNodes[i].count * clubNodes[j].count / dis;
 
-      clubNodes[i] = Object.assign({}, clubNodes[i], {
-        cx: clubNodes[i].cx + f * (x / dis),
-        cy: clubNodes[i].cy + f * (y / dis),
-      });
+      records[i].cx = records[i].cx + f * (x / dis);
+      records[i].cy = records[i].cy + f * (y / dis);
     }
   }
 
   clubNodes.forEach((node, i) => {
+    clubNodes[i].cx = clubNodes[i].cx + records[i].cx;
+    clubNodes[i].cy = clubNodes[i].cy + records[i].cy;
     clubNodes[i].path.push({
       dx: node.cx - node.ox,
       dy: node.cy - node.oy,
