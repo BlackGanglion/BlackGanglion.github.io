@@ -326,7 +326,24 @@ function createLink(parent, link, nodes, lastTime) {
   parent.appendChild(line);
 }
 
-function initNodes(nodes) {
+function initNodes(nodes, links) {
+  let degreeCount = {};
+  links.forEach((link, i) => {
+    const { source, target } = link;
+
+    if (degreeCount[source]) {
+      degreeCount[source] += 1;
+    } else {
+      degreeCount[source] = 1;
+    }
+
+    if (degreeCount[target]) {
+      degreeCount[target] += 1;
+    } else {
+      degreeCount[target] = 1;
+    }
+  });
+
   nodes.forEach((node, i) => {
     // 随机节点位置
     let randCx = Math.floor(Math.random() * width);
@@ -352,6 +369,8 @@ function initNodes(nodes) {
       ],
       // 从属于哪个社团中心
       clubNodeNumber: -1,
+      degree: degreeCount[node.id],
+      degreeCenter: degreeCount[node.id] / (nodes.length - 1),
     });
   });
 }
@@ -515,28 +534,12 @@ function randomClubNodes(nodes, k) {
           dy: 0,
         }],
         count: 0,
+        degreeCount: 0,
       });
     }
   }
 
   return selectedNodes;
-
-  /*
-  return [
-    { cx: - width / 4, cy: - height / 4,
-      ox: - width / 4, oy: - height / 4,
-      path: [{ dx: 0, dy: 0, }], count: 0, },
-    { cx: width / 4, cy: - height / 4,
-      ox: width / 4, oy: - height / 4,
-      path: [{ dx: 0, dy: 0, }], count: 0, },
-    { cx: - width / 4, cy: height / 4,
-      ox: - width / 4, oy: height / 4,
-      path: [{ dx: 0, dy: 0, }], count: 0, },
-    { cx: width / 4, cy: height / 4,
-      ox: width / 4, oy: height / 4,
-      path: [{ dx: 0, dy: 0, }], count: 0, },
-  ];
-  */
 }
 
 function updateClubNodes(nodes, clubNodes, gc) {
@@ -551,6 +554,7 @@ function updateClubNodes(nodes, clubNodes, gc) {
       oy: clubNodes[i].oy,
       queue: [],
       path: clubNodes[i].path,
+      degreeCount: 0,
     }
   }
 
@@ -563,6 +567,7 @@ function updateClubNodes(nodes, clubNodes, gc) {
     clubNodes[node.clubNodeNumber].cx = cx + (node.cx / count);
     clubNodes[node.clubNodeNumber].cy = cy + (node.cy / count);
     clubNodes[node.clubNodeNumber].queue.push(node.id);
+    clubNodes[node.clubNodeNumber].degreeCount += node.degreeCenter;
   });
 
   // 社团中心的斥力
@@ -578,10 +583,11 @@ function updateClubNodes(nodes, clubNodes, gc) {
       const y = clubNodes[i].cy - clubNodes[j].cy;
       const dis = Math.sqrt(x * x + y * y);
 
-      const f = gc * clubNodes[i].count * clubNodes[j].count / dis;
-
-      records[i].cx = records[i].cx + f * (x / dis);
-      records[i].cy = records[i].cy + f * (y / dis);
+      if (dis !== 0) {
+        const f = gc * clubNodes[i].degreeCount * clubNodes[j].degreeCount / dis;
+        records[i].cx = records[i].cx + f * (x / dis);
+        records[i].cy = records[i].cy + f * (y / dis);
+      }
     }
   }
 
@@ -609,7 +615,7 @@ function calculateClubForce(node, clubNode, g) {
   }
 
   // 社团引力
-  const f = g * 1 * dis;
+  const f = g * node.degreeCenter * dis;
 
   return {
     dis,
@@ -671,23 +677,10 @@ function renderClubNodes(parent, clubNodes, lastTime) {
 
 function checkClub(nodes, links) {
   let linksMap = {};
-  let degreeCount = {};
   links.forEach((link, i) => {
     const { source, target } = link;
     const key = `${source}-${target}`;
     linksMap[key] = 1;
-
-    if (degreeCount[source]) {
-      degreeCount[source] += 1;
-    } else {
-      degreeCount[source] = 1;
-    }
-
-    if (degreeCount[target]) {
-      degreeCount[target] += 1;
-    } else {
-      degreeCount[target] = 1;
-    }
   });
 
   const l = nodes.length;
@@ -700,7 +693,8 @@ function checkClub(nodes, links) {
       const sNode = nodes[i];
       const tNode = nodes[j];
 
-      const ans = ((linksMap[`${i}-${j}`] === 1 || linksMap[`${j}-${i}`] === 1 ? 1 : 0) - (degreeCount[i] * degreeCount[j] / (2 * m)))
+      const ans = ((linksMap[`${sNode.id}-${tNode.id}`] === 1
+        || linksMap[`${tNode.id}-${sNode.id}`] === 1 ? 1 : 0) - (sNode.degree * tNode.degree / (2 * m)))
         * (sNode.clubNodeNumber === tNode.clubNodeNumber ? 1 : 0);
 
       result += ans;
@@ -714,7 +708,7 @@ function solve(svg, data, testG = 0.81, testGC = 4, record = []) {
   const { nodes, links } = data;
 
   // 初始化节点
-  initNodes(nodes);
+  initNodes(nodes, links);
 
   const k = Math.sqrt(area / nodes.length);
 
@@ -822,11 +816,19 @@ function solve(svg, data, testG = 0.81, testGC = 4, record = []) {
   }, 0);
 }
 
-$.getJSON('./data.json', (data) => {
-  solve($('svg')[0], data);
-
-  $("#reRender").click(() => {
+function getJSON(jsonName) {
+  console.info(jsonName);
+  $.getJSON(`./${jsonName}.json`, (data) => {
     $('svg').empty();
     solve($('svg')[0], data);
   });
+}
+
+getJSON('data2');
+
+$("#reRender").click(() => {
+  const jsonName = $("#select").val();
+  getJSON(jsonName);
 });
+
+
