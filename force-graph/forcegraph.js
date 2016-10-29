@@ -109,8 +109,6 @@ function createNode(parent, { ox, oy, cx, cy, r, id, group, path, queue }, lastT
     fill: color,
   });
 
-
-
   /*
   const circleAnimateMotion = create("animateMotion");
 
