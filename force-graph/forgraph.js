@@ -356,7 +356,7 @@ function initNodes(nodes) {
   });
 }
 
-// 计算排斥力
+// 计算排斥力, cr为斥力系数
 function repulsion(x, k, cr) {
   if(isNaN(k * k / x)) console.warn('repulsion error');
   return k * k / x * cr;
@@ -396,13 +396,13 @@ function calculateRepulsion(nodes, k, cr) {
   }
 }
 
-// 计算吸引力
+// 计算吸引力，ca为引力系数，weight为权重
 function attraction(x, k, ca, weight = 0) {
   if(isNaN(x * x / k)) console.warn('attraction error');
   return x * x / k * (ca + weight);
 }
 
-function calculateAttractionDisp(sourceNode, targetNode, k, ca) {
+function calculateAttractionDisp(sourceNode, targetNode, k, ca, value) {
   const { cx: sourceX, cy: sourceY } = sourceNode;
   const { cx: targetX, cy: targetY } = targetNode;
 
@@ -417,21 +417,21 @@ function calculateAttractionDisp(sourceNode, targetNode, k, ca) {
     targetXDisp: 0,
     targetYDisp: 0,
   } : {
-    sourceXDisp: (-1) * attraction(l, k, ca) * (x / l),
-    sourceYDisp: (-1) * attraction(l, k, ca) * (y / l),
-    targetXDisp: attraction(l, k, ca) * (x / l),
-    targetYDisp: attraction(l, k, ca) * (y / l),
+    sourceXDisp: (-1) * attraction(l, k, ca, value) * (x / l),
+    sourceYDisp: (-1) * attraction(l, k, ca, value) * (y / l),
+    targetXDisp: attraction(l, k, ca, value) * (x / l),
+    targetYDisp: attraction(l, k, ca, value) * (y / l),
   }
 }
 
 function calculateAttraction(nodes, links, k, ca) {
   links.forEach((link, i) => {
-    const { source, target } = link;
+    const { source, target, value } = link;
     let { node: sourceNode, index: sourceIndex } = find(nodes, { id: source }, 'id');
     let { node: targetNode, index: targetIndex } = find(nodes, { id: target }, 'id');
 
     const { sourceXDisp, sourceYDisp,
-     targetXDisp, targetYDisp } = calculateAttractionDisp(sourceNode, targetNode, k, ca);
+     targetXDisp, targetYDisp } = calculateAttractionDisp(sourceNode, targetNode, k, ca, value);
 
     nodes[sourceIndex] = Object.assign({}, sourceNode, {
       dispX: sourceNode.dispX + sourceXDisp,
