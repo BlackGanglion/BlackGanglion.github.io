@@ -1,2 +1,2 @@
 # BlackGanglion.github.io
-我的个人主页
+个人博客
