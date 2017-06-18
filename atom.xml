@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://blackganglion.com/"/>
-  <updated>2017-03-31T17:42:08.000Z</updated>
+  <updated>2017-06-18T14:27:19.000Z</updated>
   <id>http://blackganglion.com/</id>
   
   <author>
@@ -14,6 +14,68 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>精读 React 高阶组件</title>
+    <link href="http://blackganglion.com/2017/06/18/%E7%B2%BE%E8%AF%BBReact%E9%AB%98%E9%98%B6%E7%BB%84%E4%BB%B6/"/>
+    <id>http://blackganglion.com/2017/06/18/精读React高阶组件/</id>
+    <published>2017-06-18T13:52:51.000Z</published>
+    <updated>2017-06-18T14:27:19.000Z</updated>
+    
+    <content type="html"><![CDATA[<p><strong>本文首发于知乎 <a href="https://zhuanlan.zhihu.com/p/27434557" target="_blank" rel="external">前端精读评论</a> 专栏</strong></p>
+<p>本期精读文章是：<a href="https://medium.com/@franleplant/react-higher-order-components-in-depth-cf9032ee6c3e" target="_blank" rel="external">React Higher Order Components in depth</a></p>
+<h1 id="1-引言"><a href="#1-引言" class="headerlink" title="1 引言"></a>1 引言</h1><p>高阶组件（ higher-order component ，HOC ）是 React 中复用组件逻辑的一种进阶技巧。它本身并不是 React 的 API，而是一种 React 组件的设计理念，众多的 React 库已经证明了它的价值，例如耳熟能详的 react-redux。</p>
+<p>高阶组件的概念其实并不难，我们能通过类比高阶函数迅速掌握。高阶函数是把函数作为参数传入到函数中并返回一个新的函数。这里我们把函数替换为组件，就是高阶组件了。</p>
+<p><code>const EnhancedComponent = higherOrderComponent(WrappedComponent);</code></p>
+<p>当然了解高阶组件的概念只是万里长征第一步，精读文章在阐述其概念与实现外，也强调了其重要性与局限性，以及与其他方案的比较，让我们一起来领略吧。</p>
+<a id="more"></a>
+<h1 id="2-内容概要"><a href="#2-内容概要" class="headerlink" title="2 内容概要"></a>2 内容概要</h1><p>高阶组件常见有两种实现方式，一种是 Props Proxy，它能够对 WrappedComponent 的 props 进行操作，提取 WrappedComponent state 以及使用其他元素来包裹 WrappedComponent。Props Proxy 作为一层代理，具有隔离的作用，因此传入 WrappedComponent 的 ref 将无法访问到其本身，需要在 Props Proxy 内完成中转，具体可参考以下代码，react-redux 也是这样实现的。</p>
+<p>此外各个 Props Proxy 的默认名称是相同的，需要根据 WrappedComponent 来进行不同命名。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">ppHOC</span>(<span class="params">WrappedComponent</span>) </span>&#123;</div><div class="line">  <span class="keyword">return</span> <span class="class"><span class="keyword">class</span> <span class="title">PP</span> <span class="keyword">extends</span> <span class="title">React</span>.<span class="title">Component</span> </span>&#123;</div><div class="line">    <span class="comment">// 实现 HOC 不同的命名</span></div><div class="line">    <span class="keyword">static</span> displayName = <span class="string">`HOC(<span class="subst">$&#123;WrappedComponent.displayName&#125;</span>)`</span>;</div><div class="line"></div><div class="line">    getWrappedInstance() &#123;</div><div class="line">      <span class="keyword">return</span> <span class="keyword">this</span>.wrappedInstance;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// 实现 ref 的访问</span></div><div class="line">    setWrappedInstance(ref) &#123;</div><div class="line">      <span class="keyword">this</span>.wrappedInstance = ref;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    render() &#123;</div><div class="line">      <span class="keyword">return</span> &lt;WrappedComponent &#123;</div><div class="line">        ...this.props,</div><div class="line">        ref: this.setWrappedInstance.bind(this),</div><div class="line">      &#125; /&gt;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">@ppHOC</div><div class="line">class Example extends React.Component &#123;</div><div class="line">  static displayName = 'Example';</div><div class="line">  handleClick() &#123; ... &#125;</div><div class="line">  ...</div><div class="line">&#125;</div><div class="line"></div><div class="line">class App extends React.Component &#123;</div><div class="line">  handleClick() &#123;</div><div class="line">    this.refs.example.getWrappedInstance().handleClick();</div><div class="line">  &#125;</div><div class="line">  render() &#123;</div><div class="line">    return (</div><div class="line">      &lt;div&gt;</div><div class="line">        &lt;button onClick=&#123;this.handleClick.bind(this)&#125;&gt;按钮&lt;/button&gt;</div><div class="line">        &lt;Example ref="example" /&gt;</div><div class="line">      &lt;/div&gt;  </div><div class="line">    );</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>另一种是 Inheritance Inversion，HOC 类继承了 WrappedComponent，意味着可以访问到 WrappedComponent 的 state、props、生命周期和 render 等方法。如果在 HOC 中定义了与 WrappedComponent 同名方法，将会发生覆盖，就必须手动通过 super 进行调用了。通过完全操作 WrappedComponent 的 render 方法返回的元素树，可以真正实现渲染劫持。这种方案依然是继承的思想，对于 WrappedComponent 也有较强的侵入性，因此并不常见。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">ppHOC</span>(<span class="params">WrappedComponent</span>) </span>&#123;</div><div class="line">  <span class="keyword">return</span> <span class="class"><span class="keyword">class</span> <span class="title">ExampleEnhance</span> <span class="keyword">extends</span> <span class="title">WrappedComponent</span> </span>&#123;</div><div class="line">    ...</div><div class="line">    componentDidMount() &#123;</div><div class="line">      <span class="keyword">super</span>.componentDidMount();</div><div class="line">    &#125;</div><div class="line">    componentWillUnmount() &#123;</div><div class="line">      <span class="keyword">super</span>.componentWillUnmount();</div><div class="line">    &#125;</div><div class="line">    render() &#123;</div><div class="line">      ...</div><div class="line">      return <span class="keyword">super</span>.render();</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h1 id="3-精读"><a href="#3-精读" class="headerlink" title="3 精读"></a>3 精读</h1><p>本次提出独到观点的同学有：<br><a href="https://www.zhihu.com/people/turbe-xue" target="_blank" rel="external">@monkingxue</a> <a href="https://github.com/alcat2008" target="_blank" rel="external">@alcat2008</a> <a href="https://www.zhihu.com/people/BlackGanglion" target="_blank" rel="external">@淡苍</a> <a href="https://www.zhihu.com/people/camsong" target="_blank" rel="external">@camsong</a>，精读由此归纳。</p>
+<h2 id="HOC-的适用范围"><a href="#HOC-的适用范围" class="headerlink" title="HOC 的适用范围"></a>HOC 的适用范围</h2><p>对比 HOC 范式 <code>compose(render)(state)</code> 与父组件（Parent Component）的范式 <code>render(render(state))</code>，如果完全利用 HOC 来实现 React 的 implement，将操作与 view 分离，也未尝不可，但却不优雅。HOC 本质上是统一功能抽象，强调逻辑与 UI 分离。但在实际开发中，前端无法逃离 DOM ，而逻辑与 DOM 的相关性主要呈现 3 种关联形式：</p>
+<ul>
+<li>与 DOM 相关，建议使用父组件，类似于原生 HTML 编写</li>
+<li>与 DOM 不相关，如校验、权限、请求发送、数据转换这类，通过数据变化间接控制 DOM，可以使用 HOC 抽象</li>
+<li>交叉的部分，DOM 相关，但可以做到完全内聚，即这些 DOM 不会和外部有关联，均可</li>
+</ul>
+<p>DOM 的渲染适合使用父组件，这是 React JSX 原生支持的方式，清晰易懂。最好是能封装成木偶组件（Dumb Component）。HOC 适合做 DOM 不相关又是多个组件共性的操作。如 Form 中，validator 校验操作就是纯数据操作的，放到了 HOC 中。但 validator 信息没有放到 HOC 中。但如果能把 Error 信息展示这些逻辑能够完全隔离，也可以放到 HOC 中（可结合下一小节 Form 具体实践详细了解）。<br>数据请求是另一类 DOM 不相关的场景，<a href="https://github.com/heroku/react-refetch" target="_blank" rel="external">react-refetch</a> 的实现就是使用了 HOC，做到了高效和优雅：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">connect(<span class="function"><span class="params">props</span> =&gt;</span> (&#123;</div><div class="line">  <span class="attr">usersFetch</span>: <span class="string">`/users?status=<span class="subst">$&#123;props.status&#125;</span>&amp;page=<span class="subst">$&#123;props.page&#125;</span>`</span>,</div><div class="line">  <span class="attr">userStatsFetch</span>: &#123; <span class="attr">url</span>: <span class="string">`/users/stats`</span>, <span class="attr">force</span>: <span class="literal">true</span> &#125;</div><div class="line">&#125;))(UsersList)</div></pre></td></tr></table></figure>
+<h2 id="HOC-的具体实践"><a href="#HOC-的具体实践" class="headerlink" title="HOC 的具体实践"></a>HOC 的具体实践</h2><p>HOC 在真实场景下的运行非常多，之前笔者在 <a href="https://zhuanlan.zhihu.com/p/22054582" target="_blank" rel="external">基于Decorator的组件扩展实践</a> 一文中也提过使用高阶组件将更细粒度的组件组合成 Selector 与 Search。结合精读文章，这次让我们通过 Form 组件的抽象来表现 HOC 具有的良好扩展机制。</p>
+<p>Form 中会包含各种不同的组件，常见的有 Input、Selector、Checkbox 等等，也会有根据业务需求加入的自定义组件。Form 灵活多变，从功能上看，表单校验可能为单组件值校验，也可能为全表单值校验，可能为常规检验，比如：非空、输入限制，也可能需要与服务端配合，甚至需要根据业务特点进行定制。从 UI 上看，检验结果显示的位置，可能在组件下方，也可能是在组件右侧。</p>
+<p>直接裸写 Form，无疑是机械而又重复的。将 Form 中组件的 value 经过 validator，把 value，validator 产生的 error 信息储存到 state 或 redux store 中，然后在 view 层完成显示。这条路大家都是相同的，可以进行复用，只是我们面对的是不同的组件，不同的 validator，不同的 view 而已。对于 Form 而言，既要满足通用，又要满足部分个性化的需求，以往单纯的配置化只会让使用愈加繁琐，我们所需要抽象的是 Form 功能而非 UI，因此通过 HOC 针对 Form 的功能进行提取就成为了必然。</p>
+<p><img src="https://user-images.githubusercontent.com/9314735/27116337-3f1f16a8-5103-11e7-8dc6-c7197e1b1eab.png" alt="image"></p>
+<p>至于 HOC 在 Form 上的具体实现，首先将表单中的组件（Input、Selector…）与相应 validator 与组件值回调函数名（trigger）传入 Decorator，将 validator 与 trigger 相绑定。Decorator 完成了各种不同组件与 From 内置 Store 间 value 的传递、校验功能的抽象，即精读文章中提到 Props Proxy 方式的其中两种作用：<strong>提取state</strong> 与 <strong>操作props</strong></p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">formFactoryFactory</span>(<span class="params">&#123;</span></span></div><div class="line">  validator,</div><div class="line">  trigger = <span class="string">'onChange'</span>,</div><div class="line">  ...</div><div class="line">&#125;) &#123;</div><div class="line">  <span class="keyword">return</span> FromFactory(WrappedComponent) &#123;</div><div class="line">    <span class="keyword">return</span> <span class="class"><span class="keyword">class</span> <span class="title">Decorator</span> <span class="keyword">extends</span> <span class="title">React</span>.<span class="title">Component</span> </span>&#123;</div><div class="line">      getBind(trigger, validator) &#123;</div><div class="line">        ...</div><div class="line">      &#125;</div><div class="line">      render() &#123;</div><div class="line">        <span class="keyword">const</span> newProps = &#123;</div><div class="line">          ...this.props,</div><div class="line">          [trigger]: <span class="keyword">this</span>.getBind(trigger, validator),</div><div class="line">          ...</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> &lt;WrappedComponent &#123;...newProps&#125; /&gt;</div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">// 调用</div><div class="line">formFactoryFactory(&#123;</div><div class="line">  validator: (value) =&gt; &#123;</div><div class="line">    return value !== '';</div><div class="line">  &#125;</div><div class="line">&#125;)(&lt;Input placeholder="请输入..." /&gt;)</div></pre></td></tr></table></figure>
+<p>当然为了考虑个性化需求，Form Store 也向外暴露很多 API，可以直接获取和修改 value、error 的值。现在我们需要对一个表单的所有值提交到后端进行校验，根据后端返回，分别列出各项的校验错误信息，就需要借助相应项的 setError 去完成了。</p>
+<p>这里主要参考了 <a href="https://github.com/react-component/form" target="_blank" rel="external">rc-form</a> 的实现方式，有兴趣的读者可以阅读其源码。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> &#123; createForm &#125; <span class="keyword">from</span> <span class="string">'rc-form'</span>;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Form</span> <span class="keyword">extends</span> <span class="title">React</span>.<span class="title">Component</span> </span>&#123;</div><div class="line">  submit = <span class="function"><span class="params">()</span> =&gt;</span> &#123;</div><div class="line">    <span class="keyword">this</span>.props.form.validateFields(<span class="function">(<span class="params">error, value</span>) =&gt;</span> &#123;</div><div class="line">      <span class="built_in">console</span>.log(error, value);</div><div class="line">    &#125;);</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  render() &#123;</div><div class="line">    <span class="keyword">const</span> &#123; getFieldError, getFieldDecorator &#125; = <span class="keyword">this</span>.props.form;</div><div class="line">    <span class="keyword">const</span> errors = getFieldError(<span class="string">'required'</span>);</div><div class="line">    <span class="keyword">return</span> (</div><div class="line">      <span class="xml"><span class="tag">&lt;<span class="name">div</span>&gt;</span></span></div><div class="line">        &#123;getFieldDecorator('required', &#123;</div><div class="line">          rules: [&#123; required: true &#125;],</div><div class="line">        &#125;)(<span class="tag">&lt;<span class="name">Input</span> /&gt;</span>)&#125;</div><div class="line">        &#123;errors ? errors.join(',') : null&#125;</div><div class="line">        <span class="tag">&lt;<span class="name">button</span> <span class="attr">onClick</span>=<span class="string">&#123;this.submit&#125;</span>&gt;</span>submit<span class="tag">&lt;/<span class="name">button</span>&gt;</span></div><div class="line">      <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">    );</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">export</span> createForm()(Form);</div></pre></td></tr></table></figure>
+<h1 id="4-总结"><a href="#4-总结" class="headerlink" title="4 总结"></a>4 总结</h1><p>React 始终强调组合优于继承的理念，期望通过复用小组件来构建大组件使得开发变得简单而又高效，与传统面向对象思想是截然不同的。高阶函数（HOC）的出现替代了原有 Mixin 侵入式的方案，对比隐式的 Mixin 或是继承，HOC 能够在 Devtools 中显示出来，满足抽象之余，也方便了开发与测试。当然，不可过度抽象是我们始终要秉持的原则。希望读者通过本次阅读与讨论，能结合自己具体的业务开发场景，获得一些启发。</p>
+<blockquote>
+<p>讨论地址是：<a href="http://github.com/dt-fe/weekly/issues/18" target="_blank" rel="external">精读《深入理解 React 高阶组件》 · Issue #18 · dt-fe/weekly</a></p>
+<p>如果你想参与讨论，请<a href="https://github.com/dt-fe/weekly" target="_blank" rel="external">点击这里</a>，每周都有新的主题，每周五发布。</p>
+</blockquote>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;&lt;strong&gt;本文首发于知乎 &lt;a href=&quot;https://zhuanlan.zhihu.com/p/27434557&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;前端精读评论&lt;/a&gt; 专栏&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;本期精读文章是：&lt;a href=&quot;https://medium.com/@franleplant/react-higher-order-components-in-depth-cf9032ee6c3e&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;React Higher Order Components in depth&lt;/a&gt;&lt;/p&gt;
+&lt;h1 id=&quot;1-引言&quot;&gt;&lt;a href=&quot;#1-引言&quot; class=&quot;headerlink&quot; title=&quot;1 引言&quot;&gt;&lt;/a&gt;1 引言&lt;/h1&gt;&lt;p&gt;高阶组件（ higher-order component ，HOC ）是 React 中复用组件逻辑的一种进阶技巧。它本身并不是 React 的 API，而是一种 React 组件的设计理念，众多的 React 库已经证明了它的价值，例如耳熟能详的 react-redux。&lt;/p&gt;
+&lt;p&gt;高阶组件的概念其实并不难，我们能通过类比高阶函数迅速掌握。高阶函数是把函数作为参数传入到函数中并返回一个新的函数。这里我们把函数替换为组件，就是高阶组件了。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;const EnhancedComponent = higherOrderComponent(WrappedComponent);&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;当然了解高阶组件的概念只是万里长征第一步，精读文章在阐述其概念与实现外，也强调了其重要性与局限性，以及与其他方案的比较，让我们一起来领略吧。&lt;/p&gt;
+    
+    </summary>
+    
+      <category term="组件化实践与思考" scheme="http://blackganglion.com/categories/%E7%BB%84%E4%BB%B6%E5%8C%96%E5%AE%9E%E8%B7%B5%E4%B8%8E%E6%80%9D%E8%80%83/"/>
+    
+    
+      <category term="组件" scheme="http://blackganglion.com/tags/%E7%BB%84%E4%BB%B6/"/>
+    
+  </entry>
   
   <entry>
     <title>MobX vs Redux - React Conf 2017 纪要</title>
@@ -60,9 +122,9 @@
     
     <summary type="html">
     
-      &lt;p&gt;&lt;strong&gt;本文首发于知乎 &lt;a href=&quot;https://zhuanlan.zhihu.com/purerender&quot;&gt;pure render&lt;/a&gt; 专栏&lt;/strong&gt;&lt;/p&gt;
+      &lt;p&gt;&lt;strong&gt;本文首发于知乎 &lt;a href=&quot;https://zhuanlan.zhihu.com/purerender&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;pure render&lt;/a&gt; 专栏&lt;/strong&gt;&lt;/p&gt;
 &lt;p&gt;&lt;img src=&quot;http://ol2d3d8nb.bkt.clouddn.com/26-1.jpg&quot; alt=&quot;26-1&quot;&gt;&lt;/p&gt;
-&lt;p&gt;毫无疑问，Redux 与 MobX 是 React 生态中最火热的状态管理工具，社区也一直没有停止对上述两者的讨论。近期，团队小伙伴 黄子毅 的文章 &lt;a href=&quot;https://zhuanlan.zhihu.com/p/25585910&quot;&gt;Mobx 思想的实现原理&lt;/a&gt;，及与 Redux 对比，以及正在与我一起翻译 &lt;a href=&quot;https://suprise.gitbooks.io/mobx-cn/content/fp.html&quot;&gt;MobX 中文文档&lt;/a&gt; 岳逢楽 同学的 &lt;a href=&quot;https://zhuanlan.zhihu.com/p/25722002&quot;&gt;如果用Redux不爽的话，那就试试MobX吧&lt;/a&gt;，都对此发表了自己的观点。在不久前结束的 React Conf 2017 中，Preethi Kasireddy 也做了相关分享，&lt;a href=&quot;MobX vs Redux: Comparing the Opposing Paradigms&quot;&gt;MobX vs Redux: Comparing the Opposing Paradigms&lt;/a&gt;，让我们来看看她的观点是怎样的。&lt;/p&gt;
+&lt;p&gt;毫无疑问，Redux 与 MobX 是 React 生态中最火热的状态管理工具，社区也一直没有停止对上述两者的讨论。近期，团队小伙伴 黄子毅 的文章 &lt;a href=&quot;https://zhuanlan.zhihu.com/p/25585910&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Mobx 思想的实现原理&lt;/a&gt;，及与 Redux 对比，以及正在与我一起翻译 &lt;a href=&quot;https://suprise.gitbooks.io/mobx-cn/content/fp.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;MobX 中文文档&lt;/a&gt; 岳逢楽 同学的 &lt;a href=&quot;https://zhuanlan.zhihu.com/p/25722002&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;如果用Redux不爽的话，那就试试MobX吧&lt;/a&gt;，都对此发表了自己的观点。在不久前结束的 React Conf 2017 中，Preethi Kasireddy 也做了相关分享，&lt;a href=&quot;MobX vs Redux: Comparing the Opposing Paradigms&quot;&gt;MobX vs Redux: Comparing the Opposing Paradigms&lt;/a&gt;，让我们来看看她的观点是怎样的。&lt;/p&gt;
     
     </summary>
     
@@ -97,7 +159,7 @@
     <summary type="html">
     
       &lt;p&gt;尽管 Email 中的 HTML 与我们在平时写的 HTML 并没有本质上的区别，但由于受到不同客户端渲染方式不同以及邮件安全性限制的影响，让我们在编写邮件模版时，一夜之间回到解放前。只能使用 Table 来布局，不能运行 JavaScript 脚本，不能使用外联的 CSS，图片是唯一可以引用的外部资源等等。当然这些并不是本文讨论的重点，如果感兴趣，可以参考下列文章或互联网上的更多资源。&lt;/p&gt;
-&lt;p&gt;&lt;a href=&quot;http://ued.sina.com.cn/?p=1338&quot;&gt;创建坚如磐石的HTML邮件&lt;/a&gt;&lt;br&gt;&lt;a href=&quot;http://www.ruanyifeng.com/blog/2013/06/html_email.html&quot;&gt;HTML Email 编写指南&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;http://ued.sina.com.cn/?p=1338&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;创建坚如磐石的HTML邮件&lt;/a&gt;&lt;br&gt;&lt;a href=&quot;http://www.ruanyifeng.com/blog/2013/06/html_email.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;HTML Email 编写指南&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;最近，我需要编写的邮件模版并不是 EDM (以营销为目的的电子邮件)，而是系统自动发送的统计报表邮件。因此并不需要非常绚丽，但是由于承载了一段时间内重要数据的显示，单纯的数字显得过于苍白，便希望插入一些图表来丰富。上文已经提到过了，电子邮件最多可以插入图片，平时用来制作图表 SVG、Canvas 就英雄无用武之地了。&lt;/p&gt;
     
     </summary>
@@ -159,7 +221,7 @@
       &lt;p&gt;在数据可视化中，我们往往会使用图来表达数据中所蕴含的信息。而图布局算法可以使散乱的信息 (信息多以点线的关系承载) 通过一种清晰的方式呈现出来，并符合相应的美学标准。在图布局算法模型中，其建立在粒子物理理论的基础上，将节点模拟成为原子，通过原子间的引力和斥力来得到节点的速度与加速度，计算其移动方位与距离，最终达到一个稳定平衡的状态，从而完成布局。以下就是由 d3 实现的力引导布局:&lt;/p&gt;
 &lt;p&gt;&lt;img src=&quot;http://ol2d3d8nb.bkt.clouddn.com/24-1.png&quot; alt=&quot;d3-force&quot;&gt;&lt;/p&gt;
 &lt;p&gt;在 d3 的实现中，为了达到性能与效果的平衡，节点与节点间模拟同种电荷相互排斥，并将节点存入四叉树中，利用 Barnes–Hut 近似来减少节点间电荷斥力的计算量。同时连线间的节点模拟弹簧牵引力，节点的速度综合斥力引力得出，并发生阻尼衰减，最终达到整图平衡。&lt;/p&gt;
-&lt;p&gt;在本文中，我们将对 d3 实现的力导引布局进行一步步分解，详细剖析其实现过程与背后的原理。在此之前，读者们自行阅读上图实现&lt;a href=&quot;http://bl.ocks.org/mbostock/4062045&quot;&gt;源码&lt;/a&gt;，熟悉一下 &lt;a href=&quot;https://github.com/d3/d3-force&quot;&gt;d3-force&lt;/a&gt; API。&lt;/p&gt;
+&lt;p&gt;在本文中，我们将对 d3 实现的力导引布局进行一步步分解，详细剖析其实现过程与背后的原理。在此之前，读者们自行阅读上图实现&lt;a href=&quot;http://bl.ocks.org/mbostock/4062045&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;源码&lt;/a&gt;，熟悉一下 &lt;a href=&quot;https://github.com/d3/d3-force&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;d3-force&lt;/a&gt; API。&lt;/p&gt;
     
     </summary>
     
@@ -208,9 +270,9 @@
     
     <summary type="html">
     
-      &lt;p&gt;&lt;strong&gt;本文首发于知乎 &lt;a href=&quot;https://zhuanlan.zhihu.com/purerender&quot;&gt;pure render&lt;/a&gt; 专栏&lt;/strong&gt;&lt;/p&gt;
+      &lt;p&gt;&lt;strong&gt;本文首发于知乎 &lt;a href=&quot;https://zhuanlan.zhihu.com/purerender&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;pure render&lt;/a&gt; 专栏&lt;/strong&gt;&lt;/p&gt;
 &lt;p&gt;&lt;img src=&quot;http://ol2d3d8nb.bkt.clouddn.com/27-1.png&quot; alt=&quot;27-1&quot;&gt;&lt;/p&gt;
-&lt;p&gt;在前端业务开发中，组件化已经成为我们的共识。沉淀和复用组件，是提高开发效率的利器。但在组件复用的过程中，我们往往会遇到这样的问题，组件相似，却在结构或交互上有些许差别，需要对组件进行改造方可满足需求。这个问题之前在 &lt;a href=&quot;https://zhuanlan.zhihu.com/p/21386862&quot;&gt;React实践 - Component Generator&lt;/a&gt; 就有所提及。&lt;/p&gt;
+&lt;p&gt;在前端业务开发中，组件化已经成为我们的共识。沉淀和复用组件，是提高开发效率的利器。但在组件复用的过程中，我们往往会遇到这样的问题，组件相似，却在结构或交互上有些许差别，需要对组件进行改造方可满足需求。这个问题之前在 &lt;a href=&quot;https://zhuanlan.zhihu.com/p/21386862&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;React实践 - Component Generator&lt;/a&gt; 就有所提及。&lt;/p&gt;
 &lt;p&gt;之初，我们提出了组件配置式。在业务统一的情况下，仅仅修改组件用于配置的 props 就可以满足业务需求。但随着业务发生变化导致组件形态发生变化时，我们就必须不断增加配置去应对变化，便会出现配置泛滥，而在扩展过程中又必须保证组件向下兼容，只增不减，使组件可维护性的降低。&lt;/p&gt;
 &lt;p&gt;最近的项目开发中，Jason 提出了组件组合式开发思想，有效地解决了配置式所存在的一些问题。下面我将详细阐述其思想与具体实现。&lt;/p&gt;
     
@@ -363,13 +425,13 @@
     
     <summary type="html">
     
-      &lt;p&gt;&lt;img src=&quot;http://ol2d3d8nb.bkt.clouddn.com/22-1.jpg&quot; alt=&quot;ReduxAndReact&quot; width=&quot;65%&quot; /&gt;&lt;/p&gt;
+      &lt;p&gt;&lt;img src=&quot;http://ol2d3d8nb.bkt.clouddn.com/22-1.jpg&quot; alt=&quot;ReduxAndReact&quot; width=&quot;65%&quot;&gt;&lt;/p&gt;
 &lt;blockquote&gt;
 &lt;p&gt;From the very beginning, we need to stress that Redux has no relation to React. You can write Redux apps with React, Angular, Ember, jQuery, or vanilla JavaScript.&lt;/p&gt;
 &lt;/blockquote&gt;
 &lt;p&gt;我们经常将redux与react两者放在一起谈论，但实际上Redux与React并没有直接关联，也没有相互依赖的。Redux本质上是一个状态容器，给予开发者维护状态的能力，而这恰恰是React的薄弱环节。&lt;/p&gt;
 &lt;p&gt;在仅有React的开发中，我们不得不将组件的状态存入state中，子组件需要通过父组件给予的回调函数修改父组件的state，父组件需要把状态通过props传递给子组件。两个组件间需要通信(也可以理解为两个组件需要相互修改状态)，就需要将state存储在他们共有的父组件中。随着应用越来越复杂，父组件的state越来越大，传给子组件的props也越来越复杂(即包含数据, 又有回调函数)。&lt;/p&gt;
-&lt;p&gt;此时Redux出现了，Redux单一数据流的思想和react是不谋而合的。我们可以将整个父组件的state放入Redux的store中进行维护。但我们在本文开头提到过，Redux与React之间是没有关联的，那么如何将Redux与React串联起来呢? 我们使用了&lt;a href=&quot;https://github.com/reactjs/react-redux&quot;&gt;react-redux&lt;/a&gt;。&lt;/p&gt;
+&lt;p&gt;此时Redux出现了，Redux单一数据流的思想和react是不谋而合的。我们可以将整个父组件的state放入Redux的store中进行维护。但我们在本文开头提到过，Redux与React之间是没有关联的，那么如何将Redux与React串联起来呢? 我们使用了&lt;a href=&quot;https://github.com/reactjs/react-redux&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;react-redux&lt;/a&gt;。&lt;/p&gt;
     
     </summary>
     
@@ -474,7 +536,7 @@
     
     <summary type="html">
     
-      &lt;p&gt;本文主要根据阮一峰老师的&lt;a href=&quot;https://github.com/ruanyf/webpack-demos&quot;&gt;webpack-demos&lt;/a&gt;进行一些提炼。Webpack作为目前作为火热的前端构建工具，redux的官方示例中也使用到了&lt;code&gt;webpack-dev-middleware&lt;/code&gt;、&lt;code&gt;webpack-hot-middleware&lt;/code&gt;等，便想再次总结学习一下。&lt;/p&gt;
+      &lt;p&gt;本文主要根据阮一峰老师的&lt;a href=&quot;https://github.com/ruanyf/webpack-demos&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;webpack-demos&lt;/a&gt;进行一些提炼。Webpack作为目前作为火热的前端构建工具，redux的官方示例中也使用到了&lt;code&gt;webpack-dev-middleware&lt;/code&gt;、&lt;code&gt;webpack-hot-middleware&lt;/code&gt;等，便想再次总结学习一下。&lt;/p&gt;
 &lt;h2 id=&quot;入口与出口文件&quot;&gt;&lt;a href=&quot;#入口与出口文件&quot; class=&quot;headerlink&quot; title=&quot;入口与出口文件&quot;&gt;&lt;/a&gt;入口与出口文件&lt;/h2&gt;&lt;p&gt;entry为入口文件，output为出口文件，通过webpack的处理，当前目录下的main.js会转变为bundle.js。&lt;/p&gt;
 &lt;figure class=&quot;highlight javascript&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;2&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;3&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;4&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;5&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;6&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;7&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;// webpack.config.js&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&lt;span class=&quot;built_in&quot;&gt;module&lt;/span&gt;.exports = &amp;#123;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;  &lt;span class=&quot;attr&quot;&gt;entry&lt;/span&gt;: &lt;span class=&quot;string&quot;&gt;&#39;./main.js&#39;&lt;/span&gt;,&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;  &lt;span class=&quot;attr&quot;&gt;output&lt;/span&gt;: &amp;#123;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;    &lt;span class=&quot;attr&quot;&gt;filename&lt;/span&gt;: &lt;span class=&quot;string&quot;&gt;&#39;bundle.js&#39;&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;  &amp;#125;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&amp;#125;;&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
     
@@ -520,8 +582,8 @@
     
     <summary type="html">
     
-      &lt;p&gt;本文主要对于&lt;a href=&quot;http://camsong.github.io/redux-in-chinese/index.html&quot;&gt;redux官方文档&lt;/a&gt;中的&lt;a href=&quot;https://github.com/reactjs/redux/tree/master/examples/async&quot;&gt;async&lt;/a&gt;示例结合一些源码做出一些理解。&lt;/p&gt;
-&lt;p&gt;此示例通过&lt;code&gt;&amp;lt;select&amp;gt;&lt;/code&gt;选择相应的value(reactjs与frontend)作为selectedReddit，向Reddit API请求相应的json数据，获取数据后渲染到列表中。主要采用了&lt;a href=&quot;https://github.com/gaearon/redux-thunk&quot;&gt;react-thunk&lt;/a&gt;作为middleware来实现。&lt;/p&gt;
+      &lt;p&gt;本文主要对于&lt;a href=&quot;http://camsong.github.io/redux-in-chinese/index.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;redux官方文档&lt;/a&gt;中的&lt;a href=&quot;https://github.com/reactjs/redux/tree/master/examples/async&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;async&lt;/a&gt;示例结合一些源码做出一些理解。&lt;/p&gt;
+&lt;p&gt;此示例通过&lt;code&gt;&amp;lt;select&amp;gt;&lt;/code&gt;选择相应的value(reactjs与frontend)作为selectedReddit，向Reddit API请求相应的json数据，获取数据后渲染到列表中。主要采用了&lt;a href=&quot;https://github.com/gaearon/redux-thunk&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;react-thunk&lt;/a&gt;作为middleware来实现。&lt;/p&gt;
 &lt;p&gt;首先，再来看一下&lt;code&gt;createStore&lt;/code&gt;的定义，第三个参数&lt;code&gt;applyMiddleware&lt;/code&gt;相应的中间件，这里&lt;code&gt;thunkMiddleware&lt;/code&gt;主要是用来异步控制的，后面会再次讲解&lt;/p&gt;
 &lt;figure class=&quot;highlight javascript&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;2&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;3&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;4&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;5&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;6&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;// createStore(reducer, initialState, enhancer)&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;const&lt;/span&gt; store = createStore(&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;    rootReducer,&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;    initialState,&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;    applyMiddleware(thunkMiddleware, createLogger())&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;)&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
     
@@ -783,7 +845,7 @@
     
     <summary type="html">
     
-      &lt;p&gt;原文地址: &lt;a href=&quot;http://j4n.co/blog/Creating-your-own-css-grid-system&quot;&gt;http://j4n.co/blog/Creating-your-own-css-grid-system&lt;/a&gt;&lt;/p&gt;
+      &lt;p&gt;原文地址: &lt;a href=&quot;http://j4n.co/blog/Creating-your-own-css-grid-system&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://j4n.co/blog/Creating-your-own-css-grid-system&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;CSS栅格已经出现很长时间了，它们经常会被包含在一些框架中，就像Bootstrap。我并不厌恶Bootstarp，但当你需要栅格布局而且使用框架是得不偿失的。那么怎样才能构建我们自己的CSS栅格布局呢？&lt;/p&gt;
     
     </summary>
@@ -1238,9 +1300,9 @@
     
     <summary type="html">
     
-      &lt;p&gt;原文地址: &lt;a href=&quot;https://facebook.github.io/flux/docs/todo-list.html&quot;&gt;https://facebook.github.io/flux/docs/todo-list.html&lt;/a&gt;&lt;/p&gt;
+      &lt;p&gt;原文地址: &lt;a href=&quot;https://facebook.github.io/flux/docs/todo-list.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;https://facebook.github.io/flux/docs/todo-list.html&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;&lt;img src=&quot;http://cc.cocimg.com/api/uploads/20150928/1443408513171463.jpg&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
-&lt;p&gt;让我们用一个经典的TodoMVC的应用的简单代码来展示一下Flux的结构体系。虽然完整的项目案例你可以在Github中&lt;a href=&quot;https://github.com/facebook/flux/tree/master/examples/flux-todomvc/&quot;&gt;下载&lt;/a&gt;得到，但是还是让我们一步步来完成开发。&lt;/p&gt;
+&lt;p&gt;让我们用一个经典的TodoMVC的应用的简单代码来展示一下Flux的结构体系。虽然完整的项目案例你可以在Github中&lt;a href=&quot;https://github.com/facebook/flux/tree/master/examples/flux-todomvc/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;下载&lt;/a&gt;得到，但是还是让我们一步步来完成开发。&lt;/p&gt;
     
     </summary>
     
@@ -1248,57 +1310,6 @@
     
     
       <category term="Flux" scheme="http://blackganglion.com/tags/Flux/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>The Event Of JavaScript</title>
-    <link href="http://blackganglion.com/2016/02/26/The-Event-Of-JavaScript/"/>
-    <id>http://blackganglion.com/2016/02/26/The-Event-Of-JavaScript/</id>
-    <published>2016-02-26T11:08:00.000Z</published>
-    <updated>2016-07-08T15:19:15.000Z</updated>
-    
-    <content type="html"><![CDATA[<p>当我们打开网页时，我们会触发各种各样的事件，比如加载页面完成就会触发<code>onload</code>事件，点击某个元素就会触发其<code>click</code>事件。那么我们应该如何为我们的DOM元素绑定事件？一般操作事件会有三种方式:</p>
-<h2 id="HTML事件处理程序-直接HTML内联属性（不建议这么做"><a href="#HTML事件处理程序-直接HTML内联属性（不建议这么做" class="headerlink" title="HTML事件处理程序 - 直接HTML内联属性（不建议这么做)"></a>HTML事件处理程序 - 直接HTML内联属性（不建议这么做)</h2><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">&lt;!--</span></div><div class="line">这种方式使代码耦合，将javascript代码直接嵌入到了html中，不利于后期的代码维护，也不利于书写较长代码。</div><div class="line">--&gt;</div><div class="line"><span class="tag">&lt;<span class="name">button</span> <span class="attr">onclick</span>=<span class="string">"alert('你点击了按钮');"</span>&gt;</span>点击按钮<span class="tag">&lt;/<span class="name">button</span>&gt;</span></div></pre></td></tr></table></figure>
-<a id="more"></a>
-<h2 id="DOM-0级事件处理程序-DOM属性的绑定"><a href="#DOM-0级事件处理程序-DOM属性的绑定" class="headerlink" title="DOM 0级事件处理程序 - DOM属性的绑定"></a>DOM 0级事件处理程序 - DOM属性的绑定</h2><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// 采用属性赋值的形式，比较简单，但容易被覆盖</span></div><div class="line">element.onclick = <span class="function"><span class="keyword">function</span>(<span class="params">event</span>)</span>&#123;</div><div class="line">    alert(<span class="string">'你点击了按钮'</span>);</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
-<h2 id="DOM-2级事件处理程序-使用标准的事件监听函数"><a href="#DOM-2级事件处理程序-使用标准的事件监听函数" class="headerlink" title="DOM 2级事件处理程序 - 使用标准的事件监听函数"></a>DOM 2级事件处理程序 - 使用标准的事件监听函数</h2><p>为DOM元素添加事件: </p>
-<p><strong>element.addEventListener(event, function, useCapture)</strong></p>
-<p>为DOM元素移出事件: </p>
-<p><strong>element.removeEventListener(event, function, useCapture)</strong></p>
-<p><code>event</code>为事件名称，<code>function</code>为事件触发后的回调函数，<code>useCapture</code>为一个用户选项</p>
-<p><code>useCapture</code>指定事件是在捕获阶段执行还是冒泡阶段执行，默认为false在冒泡阶段执行，true则为事件句柄在捕获阶段执行</p>
-<p>这里就不得不提DOM的事件流，”DOM2级事件”规定事件流包括3个阶段：事件捕获阶段、处于目标阶段和事件冒泡阶段</p>
-<p><img src="https://www.w3.org/TR/DOM-Level-3-Events/images/eventflow.svg" alt=""></p>
-<p><img src="http://images.cnitblog.com/blog/477973/201302/18141423-8bd09a9c1e184df9a13b6e26b88348f3.jpg" alt=""></p>
-<p>当我们在DOM树上的某个节点发生操作时，就会有一个事件发出。这个事件从window发出，通过DOM树到达目标节点，也就是发生操作的节点。捕获过程中，凡是经过节点上有该事件是定义在捕获阶段执行的，就会被触发。</p>
-<p>冒泡阶段与捕获阶段原理基本相同，到达目的节点，目标阶段结束后，会依据冒泡阶段的DOM树路径返回，触发经过节点对于该事件在冒泡阶段的执行。</p>
-<p>利用事件冒泡的机制，我们能够减少对于元素的大量绑定，只需统一绑定在父元素上即可，也称为事件委托，有利于页面整体运行的性能。同时我们需要进行一些DOM节点的插入与删除，仅仅绑定在一个节点上往往会由于插入删除而失效，事件冒泡也能很好地解决这个问题。</p>
-<p>当然你如果只想触发特定元素上的绑定事件，可以在回调函数中使用<code>event.stopPropagation()</code>来阻止事件的冒泡，<strong>注意：该函数并非是来阻止冒泡阶段发生的，而是执行后终止该事件继续传播，无论其处于什么阶段</strong></p>
-<p>在触发DOM上的某个事件时，会产生一个事件对象event，之前已经略有提及。其包含了许多与事件相关的属性与方法，比较常见的有：</p>
-<p><code>event.type</code> 被触发的事件类型，比如’click’, ‘mouseover’;</p>
-<p><code>event.target</code> 事件的目标，注意与<code>event.currentTarget</code>的区别，currentTarget为当前正在处理事件的元素，可能为冒泡或是捕获阶段，target目标元素的父元素;</p>
-<p><code>event.clientX/Y</code> 是在事件发生时，鼠标指针与可视区域网页顶部和左部的距离。<code>event.pageX/Y</code>与其稍稍不同，是与整个网页的顶部和左部距离。在没有滚动条的情况下两者的值是一致的，有滚动条的情况下，pageX &gt;= clientX，pageY &gt;= clientY;</p>
-<p><code>event.preventDefault()</code> 取消事件的默认行为，比如a标签的超链接;</p>
-<p>在javascript的事件处理中，我们有时还需要考虑到IE的兼容性。比如，上文提及的DOM方法中<code>addEventListener</code>对应IE的<code>attachEvent</code>，<code>removeEventListener</code>对应IE的<code>detachEvent</code>，在此方法下，事件处理程序会在全局作用域中运行。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">var</span> btn = <span class="built_in">document</span>.getElementById(<span class="string">"myBtn"</span>);</div><div class="line">btn.attachEvent(<span class="string">"onclick"</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</div><div class="line">    alert(<span class="keyword">this</span> === <span class="built_in">window</span>) <span class="comment">// true</span></div><div class="line">&#125;);</div><div class="line"></div><div class="line"><span class="comment">// 将addEventListener与attachEvent集成到addEvent上</span></div><div class="line"><span class="keyword">if</span> (<span class="built_in">document</span>.addEventListener) &#123;</div><div class="line">    <span class="keyword">this</span>.addEvent = <span class="function"><span class="keyword">function</span>(<span class="params">elem, type, fn</span>) </span>&#123;</div><div class="line">        elem.addEventListener(type, fn, <span class="literal">false</span>);</div><div class="line">        <span class="keyword">return</span> fn; </div><div class="line">    &#125;;</div><div class="line">&#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="built_in">document</span>.attachEvent) &#123;</div><div class="line">    <span class="keyword">this</span>.addEvent = <span class="function"><span class="keyword">function</span>(<span class="params">elem, type, fn</span>) </span>&#123;</div><div class="line">        <span class="keyword">var</span> bound = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</div><div class="line">            <span class="comment">// 将this绑定在elem上</span></div><div class="line">            <span class="keyword">return</span> fn.apply(elem, <span class="built_in">arguments</span>);</div><div class="line">        &#125;</div><div class="line">        elem.attachEvent(<span class="string">"on"</span> + type, bound);</div><div class="line">        <span class="keyword">return</span> bound;</div><div class="line">    &#125;;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
-<p>IE中的事件对象与DOM的也略有不同，我们也建议在书写时考虑浏览器的兼容性</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span> ( !event.target ) &#123;</div><div class="line">    event.target = event.srcElement || <span class="built_in">document</span>;</div><div class="line">&#125;</div><div class="line">event.preventDefault = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</div><div class="line">    event.returnValue = <span class="literal">false</span>;</div><div class="line">&#125;;</div><div class="line">event.stopPropagation = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</div><div class="line">    event.cancelBubble = <span class="literal">true</span>;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
-<p>上周做了拉钩网首页一个小效果的<a href="https://github.com/BlackGanglion/Practice/tree/master/javascript-practice/2.19" target="_blank" rel="external">demo</a>，其中需要根据鼠标移入移出元素来实现js效果，这里我留意到了鼠标移动事件。</p>
-<p>目前存在两组鼠标移动事件，<code>mouseover</code>与<code>mouseout</code>均会冒泡，并且不论鼠标指针穿过被选元素或其子元素，都会触发事件，而且无法阻止其冒泡；<code>mouseenter</code>与<code>mouseleave</code>则不冒泡，只有在鼠标指针穿过被选元素时，才会触发事件。一般我们为了防止事件反复触发，以及动画的抖动，选择<code>mouseenter/mouseleave</code>事件。</p>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;当我们打开网页时，我们会触发各种各样的事件，比如加载页面完成就会触发&lt;code&gt;onload&lt;/code&gt;事件，点击某个元素就会触发其&lt;code&gt;click&lt;/code&gt;事件。那么我们应该如何为我们的DOM元素绑定事件？一般操作事件会有三种方式:&lt;/p&gt;
-&lt;h2 id=&quot;HTML事件处理程序-直接HTML内联属性（不建议这么做&quot;&gt;&lt;a href=&quot;#HTML事件处理程序-直接HTML内联属性（不建议这么做&quot; class=&quot;headerlink&quot; title=&quot;HTML事件处理程序 - 直接HTML内联属性（不建议这么做)&quot;&gt;&lt;/a&gt;HTML事件处理程序 - 直接HTML内联属性（不建议这么做)&lt;/h2&gt;&lt;figure class=&quot;highlight html&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;2&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;3&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;4&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;&amp;lt;!--&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;这种方式使代码耦合，将javascript代码直接嵌入到了html中，不利于后期的代码维护，也不利于书写较长代码。&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;--&amp;gt;&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&lt;span class=&quot;tag&quot;&gt;&amp;lt;&lt;span class=&quot;name&quot;&gt;button&lt;/span&gt; &lt;span class=&quot;attr&quot;&gt;onclick&lt;/span&gt;=&lt;span class=&quot;string&quot;&gt;&quot;alert(&#39;你点击了按钮&#39;);&quot;&lt;/span&gt;&amp;gt;&lt;/span&gt;点击按钮&lt;span class=&quot;tag&quot;&gt;&amp;lt;/&lt;span class=&quot;name&quot;&gt;button&lt;/span&gt;&amp;gt;&lt;/span&gt;&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
-    
-    </summary>
-    
-      <category term="前端基本功" scheme="http://blackganglion.com/categories/%E5%89%8D%E7%AB%AF%E5%9F%BA%E6%9C%AC%E5%8A%9F/"/>
-    
-    
-      <category term="JavaScript基础" scheme="http://blackganglion.com/tags/JavaScript%E5%9F%BA%E7%A1%80/"/>
     
   </entry>
   
